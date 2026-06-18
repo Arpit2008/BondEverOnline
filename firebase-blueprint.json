@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User accounts containing buyer or affiliate status, role, block state, and payout info.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "affiliate", "admin"] },
+        "isBlocked": { "type": "boolean" },
+        "referredBy": { "type": "string" },
+        "affiliateStatus": { "type": "string", "enum": ["none", "pending", "approved", "rejected"] },
+        "walletBalance": { "type": "number" },
+        "totalEarned": { "type": "number" },
+        "pendingCommission": { "type": "number" },
+        "payoutDetails": { "type": "string" },
+        "clicks": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email", "role", "isBlocked"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Courses and products sold on the platform.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "commissionPercentage": { "type": "number" },
+        "downloadLink": { "type": "string" },
+        "thumbnailUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "category", "description", "price", "commissionPercentage", "downloadLink"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product categories.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Purchases and referral tracked commissions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "userEmail": { "type": "string" },
+        "productId": { "type": "string" },
+        "productTitle": { "type": "string" },
+        "price": { "type": "number" },
+        "affiliateId": { "type": "string" },
+        "affiliateCommission": { "type": "number" },
+        "utr": { "type": "string" },
+        "screenshotUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "notes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "userEmail", "productId", "productTitle", "price", "utr", "status"]
+    },
+    "Payout": {
+      "title": "Payout",
+      "description": "Affiliate withdrawal requests and settlement records.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "affiliateId": { "type": "string" },
+        "affiliateEmail": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "approved", "settled", "rejected"] },
+        "utr": { "type": "string" },
+        "payoutDetails": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "affiliateId", "affiliateEmail", "amount", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User accounts"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Courses"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Course categories"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Purchase orders and payments"
+    },
+    "/payouts/{payoutId}": {
+      "schema": "Payout",
+      "description": "Affiliate withdrawal / payouts"
+    }
+  }
+}

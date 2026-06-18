@@ -1,0 +1,6 @@
+{
+  "name": "BondEver",
+  "description": "Premium learning store and affiliate platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

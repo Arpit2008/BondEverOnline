@@ -1,0 +1,121 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'arpitmaurya55555@gmail.com' || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          getUserData().role == 'admin'
+        )
+      );
+    }
+
+    function isBlocked() {
+      return isSignedIn() && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isBlocked', false) == true;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Capture all path, default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Rules for Users
+    match /users/{userId} {
+      allow read: if isSignedIn() && !isBlocked() && (isOwner(userId) || isAdmin());
+      // On creation, users can register themselves with limited defaults. Blocked status must be false, role must be user or affiliate (not admin directly).
+      allow create: if isSignedIn() && isOwner(userId) && 
+        request.resource.data.role in ['user', 'affiliate'] &&
+        request.resource.data.isBlocked == false &&
+        request.resource.data.walletBalance == 0 &&
+        request.resource.data.totalEarned == 0 &&
+        request.resource.data.pendingCommission == 0;
+      
+      // On update, users can only modify displayName or payoutDetails, not structural/financial fields. Admin can modify everything.
+      allow update: if isSignedIn() && !isBlocked() && (
+        isAdmin() || (
+          isOwner(userId) && 
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.isBlocked == resource.data.isBlocked &&
+          (!('walletBalance' in request.resource.data) || !('walletBalance' in resource.data) || request.resource.data.walletBalance == resource.data.walletBalance || (request.resource.data.walletBalance < resource.data.walletBalance && request.resource.data.walletBalance >= 0)) &&
+          (!('totalEarned' in request.resource.data) || !('totalEarned' in resource.data) || request.resource.data.totalEarned == resource.data.totalEarned) &&
+          (!('pendingCommission' in request.resource.data) || !('pendingCommission' in resource.data) || request.resource.data.pendingCommission == resource.data.pendingCommission) &&
+          (!('email' in request.resource.data) || !('email' in resource.data) || request.resource.data.email == resource.data.email)
+        )
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Rules for Products
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Rules for Categories
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Rules for Orders
+    match /orders/{orderId} {
+      allow read: if isSignedIn() && !isBlocked() && (
+        isAdmin() || 
+        resource.data.userId == request.auth.uid || 
+        resource.data.affiliateId == request.auth.uid
+      );
+      // New orders are created as 'pending'.
+      allow create: if isSignedIn() && !isBlocked() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      // Only admins can update (approve/reject) or delete orders.
+      allow update, delete: if isAdmin();
+    }
+
+    // Rules for Payouts
+    match /payouts/{payoutId} {
+      allow read: if isSignedIn() && !isBlocked() && (
+        isAdmin() || 
+        resource.data.affiliateId == request.auth.uid
+      );
+      // Affiliates can request payouts as 'pending'.
+      allow create: if isSignedIn() && !isBlocked() && 
+        request.resource.data.affiliateId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      // Only admins can update (settle/reject) or delete payouts.
+      allow update, delete: if isAdmin();
+    }
+
+    // Rules for Settings (Announcement, etc.)
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Rules for Traffic heartbeats
+    match /traffic/{visitorId} {
+      allow read: if isAdmin();
+      allow write: if true;
+    }
+  }
+}
