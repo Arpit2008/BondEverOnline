@@ -112,6 +112,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <span>Continue with Google</span>
           </button>
 
+          <p className="text-[10px] text-slate-500 font-sans text-center leading-normal px-2">
+            ⚙️ <strong className="text-slate-400">Preview Iframe Warning:</strong> If Google popup login is blocked by third-party cookie controls, open the website in a <strong>New Tab</strong> or proceed using credentials below.
+          </p>
+
           <div className="relative flex items-center justify-center my-4">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-800"></div>

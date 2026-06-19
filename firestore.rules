@@ -42,9 +42,12 @@ service cloud.firestore {
     // Rules for Users
     match /users/{userId} {
       allow read: if isSignedIn() && !isBlocked() && (isOwner(userId) || isAdmin());
-      // On creation, users can register themselves with limited defaults. Blocked status must be false, role must be user or affiliate (not admin directly).
+      // On creation, users can register themselves with limited defaults. Blocked status must be false, role must be user or affiliate (not admin directly, except for the verified master admin).
       allow create: if isSignedIn() && isOwner(userId) && 
-        request.resource.data.role in ['user', 'affiliate'] &&
+        (
+          request.resource.data.role in ['user', 'affiliate'] ||
+          (request.resource.data.role == 'admin' && request.auth.token.email == 'arpitmaurya55555@gmail.com')
+        ) &&
         request.resource.data.isBlocked == false &&
         request.resource.data.walletBalance == 0 &&
         request.resource.data.totalEarned == 0 &&
